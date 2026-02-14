@@ -21,9 +21,10 @@ This fork provides several improvements over the original implementation:
 
 ### Key Differences
 - **Base Image**: Alpine Linux 3.23 (latest) vs Debian 12 (Bookworm)
-- **Zero Critical/High CVEs**: All critical and high-severity vulnerabilities eliminated
+- **Zero Critical/High CVEs**: All critical and high-severity vulnerabilities eliminated ✅
 - **Smaller Attack Surface**: 3.4× fewer packages means significantly fewer potential vulnerabilities
 - **Active Maintenance**: Always uses latest Alpine version with most recent security patches
+- **Automated Security**: Dependabot + Trivy scanning on every build
 - **Improved Git Operations**: Robust handling of repository updates with `git reset --hard` + `git pull`
 - **Enhanced Security Model**: See Security section below
 
