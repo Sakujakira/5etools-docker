@@ -80,10 +80,14 @@ jobs:
         TRIVY_USERNAME: ${{ github.actor }}
         TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
       with:
-        image-ref: ghcr.io/${{ github.repository }}:latest
+        #image-ref: ghcr.io/${{ github.repository }}:latest
+        image-ref: 'ghcr.io/${{ github.repository }}:${{ github.sha }}'
         format: 'sarif'
         output: 'trivy-results.sarif'
+        ignore-unfixed: true
+        vuln-type: 'os,library'
         severity: 'CRITICAL,HIGH,MEDIUM'
+
         exit-code: '0'  # Don't fail build, just report
 
     - name: Upload Trivy results to GitHub Security
