@@ -35,6 +35,29 @@ Alpine Linux is purpose-built for containers with minimal bloat. The smaller foo
 - Fewer packages to patch and maintain
 - Smaller attack surface for security vulnerabilities
 
+### CI/CD & Automated Security
+This project implements comprehensive automated security monitoring:
+
+**Continuous Integration/Deployment:**
+- Multi-architecture builds (linux/amd64, linux/arm64) on every commit
+- Automated builds pushed to both GitHub Container Registry and Docker Hub
+- Docker build caching for faster iterations
+
+**Automated Vulnerability Scanning:**
+- **Trivy scanner** runs on every push to main branch
+- Scans for OS and library vulnerabilities (Critical, High, Medium severity)
+- Results automatically uploaded to GitHub Security tab as SARIF reports
+- Build artifacts are scanned using image digest for accuracy
+- Secondary summary report highlights Critical/High vulnerabilities
+
+**Dependency Management:**
+- **Dependabot** monitors base images and GitHub Actions daily/weekly
+- Automatic pull requests for security updates
+- Keeps dependencies current with minimal manual intervention
+
+**Security Visibility:**
+View real-time security scan results in your repository's **Security → Code scanning** tab. All vulnerability findings are tracked and can trigger alerts for new CVEs.
+
 ## Security
 
 This implementation follows Docker security best practices:

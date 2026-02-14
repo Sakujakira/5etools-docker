@@ -5,16 +5,16 @@ This document tracks planned improvements and enhancements for the project.
 ## 🔥 High Priority (Quick Wins)
 
 ### Security & Automation
-- [ ] **Add Dependabot configuration** (.github/dependabot.yml)
-  - Auto-update Docker base image
-  - Weekly checks for security updates
+- [x] **Add Dependabot configuration** (.github/dependabot.yml) ✅
+  - Auto-update Docker base image (daily)
+  - Weekly checks for GitHub Actions updates
   - Auto-create PRs for dependency updates
 
-- [ ] **Add container scanning to CI/CD**
-  - Integrate Trivy or Grype scanner
-  - Scan on every PR and push
-  - Fail builds on critical/high CVEs
-  - Upload results to GitHub Security tab
+- [x] **Add container scanning to CI/CD** ✅
+  - Integrated Trivy scanner
+  - Scans on every push to main
+  - Reports all CVEs (Critical, High, Medium)
+  - Uploads SARIF results to GitHub Security tab
 
 - [ ] **Create SECURITY.md**
   - Document security policy
@@ -156,6 +156,9 @@ This document tracks planned improvements and enhancements for the project.
 - [x] Add AI-assisted development disclaimer
 - [x] Upgrade to httpd:2-alpine for latest security patches
 - [x] Achieve zero critical/high CVEs
+- [x] Add Dependabot configuration (daily Docker checks, weekly GitHub Actions)
+- [x] Add Trivy container scanning to CI/CD pipeline
+- [x] Integrate GitHub Security tab with SARIF uploads
 
 ---
 
@@ -193,5 +196,5 @@ If you'd like to help with any of these items:
 
 ---
 
-*Last Updated: 2026-02-14*
+*Last Updated: 2026-02-15*
 *Maintainer: Sakujakira*
