@@ -77,10 +77,10 @@ jobs:
       if: github.event_name != 'pull_request'
       uses: aquasecurity/trivy-action@master
       env:
-        TRIVY_USERNAME: ${{ github.actor }}
-        TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        TRIVY_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
       with:
-        image-ref: 'ghcr.io/${{ github.repository }}@${{ steps.build.outputs.digest }}'
+        image-ref: 'docker.io/${{ secrets.DOCKERHUB_USERNAME }}/5etools-docker@${{ steps.build.outputs.digest }}'
         format: 'sarif'
         output: 'trivy-results.sarif'
         ignore-unfixed: true
@@ -100,10 +100,10 @@ jobs:
       if: github.event_name != 'pull_request'
       uses: aquasecurity/trivy-action@master
       env:
-        TRIVY_USERNAME: ${{ github.actor }}
-        TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        TRIVY_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
       with:
-        image-ref: ghcr.io/${{ github.repository }}:latest
+        image-ref: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/5etools-docker:latest
         format: 'table'
         severity: 'CRITICAL,HIGH'
         exit-code: '1'  # Fail if critical/high vulnerabilities found
