@@ -65,12 +65,4 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
-    - name: Docker Hub Description
-      if: github.event_name != 'pull_request'
-      uses: peter-evans/dockerhub-description@v4  # Neueste
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-        repository: 5etools-docker
-        description: |
-          5eTools Docker Container - Ein benutzerfreundlicher und vielseitiger Container für die 5eTools-Webanwendung, optimiert für einfache Bereitstellung und Wartung.
+        
