@@ -1,69 +1,98 @@
-#!/bin/bash
+#!/bin/sh
+set -e # Exit on error
 
-# Print current user ID
-id
+PUID=${PUID:-1000}
+PGID=${PGID:-1000}
+DL_LINK=${DL_LINK:-https://github.com/5etools-mirror-3/5etools-src.git}
+IMG_LINK=${IMG_LINK:-https://github.com/5etools-mirror-3/5etools-img.git}
 
-# Ensure clean, non-root ownership of the htdocs directory.
-chown -R $PUID:$PGID /usr/local/apache2/htdocs
+printf " === Provided PUID: %s\n" "$PUID"
+printf " === Provided PGID: %s\n" "$PGID"
+printf " === These Links will be used:\n"
+printf " === DL_LINK: %s\n" "$DL_LINK"
+printf " === IMG_LINK: %s\n" "$IMG_LINK"
 
-# Delete index.html if it's the stock apache file. Otherwise it impedes the git clone.
-if grep -Fq '<html><body><h1>It works!</h1></body></html>' "/usr/local/apache2/htdocs/index.html"; then
-  rm /usr/local/apache2/htdocs/index.html
-fi
+# If User and group don't exist, create them. If they do exist, ignore the error and continue.
+addgroup -g "$PGID" appgroup 2>/dev/null || true
+adduser -D -u "$PUID" appuser -G appgroup  2>/dev/null || true
 
 # If the user doesn't want to update from a source, 
 # check for local version.
 # If local version is found, print version and start server.
 # If no local version is found, print error message and exit.
 if [ "$OFFLINE_MODE" = "TRUE" ]; then 
-  echo " === Offline mode is enabled. Will try to launch from local files. Checking for local version..."
+  printf " === Offline mode is enabled. Will try to launch from local files. Checking for local version...\n"
   if [ -f /usr/local/apache2/htdocs/package.json ]; then
-    VERSION=$(jq -r .version package.json) # Get version from package.json
-    echo " === Starting version $VERSION"
+    VERSION=$(jq -r .version /usr/local/apache2/htdocs/package.json) # Get version from package.json
+    printf " === Starting version %s\n" "$VERSION"
+    printf " === Configuring Apache to run as user %s:%s\n" "$PUID" "$PGID"
+    # Configure Apache to run worker processes as the specified user/group
+    sed -i "s/^User .*/User #$PUID/" /usr/local/apache2/conf/httpd.conf
+    sed -i "s/^Group .*/Group #$PGID/" /usr/local/apache2/conf/httpd.conf
     httpd-foreground
   else
-    echo " === No local version detected. Exiting."
+    printf " === No local version detected. Exiting.\n"
     exit 1
   fi
 fi
 
 # Move to the working directory for working with files.
-cd /usr/local/apache2/htdocs
+cd /usr/local/apache2/htdocs || exit
 
-echo " === Checking directory permissions for /usr/local/apache2/htdocs"
+printf " === Checking directory permissions for /usr/local/apache2/htdocs\n"
 ls -ld /usr/local/apache2/htdocs
 
-DL_LINK=${DL_LINK:-https://github.com/5etools-mirror-2/5etools-mirror-2.github.io.git}
-IMG_LINK=${IMG_LINK:-https://github.com/5etools-mirror-2/5etools-img}
-
-echo " === Using GitHub mirror at $DL_LINK"
+printf " === Using GitHub mirror at %s\n" "$DL_LINK"
 if [ ! -d "./.git" ]; then # if no git repository already exists
-    echo " === No existing git repository, creating one"
+    printf " === No existing git repository, creating one\n"
     git config --global user.email "autodeploy@localhost"
     git config --global user.name "AutoDeploy"
     git config --global pull.rebase false # Squelch nag message
     git config --global --add safe.directory '/usr/local/apache2/htdocs' # Disable directory ownership checking, required for mounted volumes
-    git clone $DL_LINK . # clone the repo with no files and no object history
+    git clone --depth=1 "$DL_LINK" . # clone the repo with no files and no object history
 else
-    echo " === Using existing git repository"
+    printf " === Using existing git repository\n"
     git config --global --add safe.directory '/usr/local/apache2/htdocs' # Disable directory ownership checking, required for mounted volumes
 fi
 
-if [[ "$IMG" == "TRUE" ]]; then # if user wants images
-    echo " === Pulling images from GitHub... (This will take a while)"
-    git submodule add -f $IMG_LINK /usr/local/apache2/htdocs/img
+if [ "$IMG" = "TRUE" ]; then # if user wants images
+    printf " === Pulling images from GitHub... (This will take a while)\n"
+    if [ ! -d "./img/.git" ]; then
+        git submodule add --depth=1 -f "$IMG_LINK" /usr/local/apache2/htdocs/img
+    else
+        printf " === Using existing img submodule\n"
+        git submodule update --remote --depth=1
+    fi    
 fi
 
-echo " === Pulling latest files from GitHub..."
-git checkout
-git fetch
-git pull --depth=1
-VERSION=$(jq -r .version package.json) # Get version from package.json
+printf " === Pulling latest files from GitHub...\n"
+#git fetch origin --depth=1
+git reset --hard origin/HEAD
+git pull origin main --depth=1
+if [ -f /usr/local/apache2/htdocs/package.json ]; then
+    VERSION=$(jq -r .version /usr/local/apache2/htdocs/package.json) # Get version from package.json
+else 
+    VERSION="unknown (no package.json)"
+fi
 
-if [[ `git status --porcelain` ]]; then
+
+if [ -n "$(git status --porcelain)" ]; then
     git restore .
 fi
 
-echo " === Starting version $VERSION"
+# Since git ran as root, we need to change ownership of the htdocs and logs directories to the non-root user.
+# This must happen AFTER all git operations are complete.
+printf " === Setting ownership of files to %s:%s\n" "$PUID" "$PGID"
+chown -R "$PUID":"$PGID" /usr/local/apache2/htdocs
+chown -R "$PUID":"$PGID" /usr/local/apache2/logs
+
+ls -la /usr/local/apache2/htdocs
+
+printf " === Starting version %s\n" "$VERSION"
+printf " === Configuring Apache to run as user %s:%s\n" "$PUID" "$PGID"
+
+# Configure Apache to run worker processes as the specified user/group
+sed -i "s/^User .*/User #$PUID/" /usr/local/apache2/conf/httpd.conf
+sed -i "s/^Group .*/Group #$PGID/" /usr/local/apache2/conf/httpd.conf
 
 httpd-foreground

@@ -1,8 +1,8 @@
-FROM httpd:2.4.66
+FROM httpd:alpine3.20
 
-# ARG BEFORE FROM!
 ARG PUID=1000
 ARG PGID=1000
+
 ENV PUID=$PUID \
     PGID=$PGID
 
@@ -10,25 +10,25 @@ ENV PUID=$PUID \
 COPY --chmod=755 init.sh /init.sh
 
 # Install deps + cleanup (reduced CVEs/Bloat)
-RUN apt-get update && \
-    apt-get -y upgrade -qq && \
-    apt-get -y install --no-install-recommends curl git jq && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache git jq su-exec && \
+    rm -rf /var/cache/apk/*
 
-
-RUN echo "<Location /server-status>\n"\
-    "    SetHandler server-status\n"\
-    "    Order deny,allow\n"\
-    "    Allow from all\n"\
-    "</Location>\n"\
-    >> /usr/local/apache2/conf/httpd.conf
+RUN printf '<Location /server-status>\n\
+    SetHandler server-status\n\
+    Order deny,allow\n\
+    Allow from all\n\
+</Location>\n' \
+>> /usr/local/apache2/conf/httpd.conf
 
 # htdocs clean + chown
 WORKDIR /usr/local/apache2/htdocs/
-RUN rm -rf * .??* && \
-    groupadd -g ${PGID} appgroup && \
-    useradd -u ${PUID} -g appgroup -s /bin/bash appuser && \
-    chown -R appuser:appgroup .
+RUN rm -rf * .[!.]* ..?*
+#RUN rm -rf * .??* && \
+#    addgroup -g $PGID -S appgroup && \
+#    adduser -u $PUID -S -G appgroup appuser && \
+#    chown -R appuser:appgroup .
+
+
 
 # Labels for registry
 LABEL org.opencontainers.image.source="https://github.com/Sakujakira/5etools-docker" \
@@ -36,7 +36,7 @@ LABEL org.opencontainers.image.source="https://github.com/Sakujakira/5etools-doc
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost/ || exit 1
+  CMD wget -qO- http://localhost/ || exit 1
 
-USER appuser
-CMD ["/bin/bash", "/init.sh"]
+#USER appuser
+CMD ["/init.sh"]

@@ -1,0 +1,5 @@
+# Claude Code files
+.claude/
+
+# Keep CLAUDE.md tracked (not ignored)
+!CLAUDE.md

@@ -1,4 +1,63 @@
-This is a simple image for hosting your own 5eTools instance. It is based on the Apache `httpd` image and uses components of the auto-updater script from the [5eTools wiki](https://wiki.tercept.net/en/5eTools/InstallGuide). This image is built from [this GitHub repository](https://github.com/Jafner/5etools-docker). 
+This is a simple image for hosting your own 5eTools instance. It is based on the Apache `httpd` Alpine image and uses components of the auto-updater script from the [5eTools wiki](https://wiki.tercept.net/en/5eTools/InstallGuide). This image is built from [this GitHub repository](https://github.com/Sakujakira/5etools-docker).
+
+This project is based on the original repository: https://github.com/Jafner/5etools-docker.
+
+## Comparison with Original Image
+
+This fork provides several improvements over the original implementation:
+
+### Image Size & Security
+| Metric | This Image (Alpine) | Original (Debian) | Improvement |
+|--------|---------------------|-------------------|-------------|
+| **Image Size** | 77 MB | 279 MB | **3.6× smaller** |
+| **Packages** | 62 | 224 | **3.6× fewer** |
+| **Total CVEs** | 55 | 173 | **68% fewer vulnerabilities** |
+| **Critical CVEs** | 2 | 7 | **71% fewer critical** |
+| **High CVEs** | 18 | 34 | **47% fewer high** |
+
+*CVE data from Docker Scout as of February 2026*
+
+### Key Differences
+- **Base Image**: Alpine Linux 3.20 vs Debian 12 (Bookworm)
+- **Smaller Attack Surface**: Fewer packages means fewer potential vulnerabilities
+- **Active Maintenance**: Updated dependencies and security patches
+- **Improved Git Operations**: Robust handling of repository updates with `git reset --hard` + `git pull`
+- **Enhanced Security Model**: See Security section below
+
+### Why Alpine?
+Alpine Linux is purpose-built for containers with minimal bloat. The smaller footprint means:
+- Faster image pulls and container startup
+- Reduced disk space usage
+- Fewer packages to patch and maintain
+- Smaller attack surface for security vulnerabilities
+
+## Security
+
+This implementation follows Docker security best practices:
+
+### Non-Root Execution
+- **Apache worker processes run as non-root** (PUID/PGID specified user)
+- Apache master process runs as root only for initial setup (standard Apache practice)
+- All web content files owned by non-root user (PUID:PGID)
+- Privilege separation via Apache's native User/Group directives
+
+### File Permissions
+- Downloaded files are owned by the user specified via `PUID`/`PGID` environment variables
+- Apache logs directory properly permissioned for non-root access
+- Git operations complete before ownership transfer to ensure consistent permissions
+
+### Container Security
+- Minimal package installation (git, jq, su-exec only)
+- `.dockerignore` prevents sensitive files in build context
+- Healthcheck monitors container status
+- Idempotent startup script handles container restarts gracefully
+
+### Comparison with Original
+The original implementation runs Apache entirely as root, while this fork properly segregates privileges:
+- **Original**: All Apache processes run as root
+- **This fork**: Master as root (required), workers as PUID:PGID (least privilege)
+
+This follows the principle of least privilege and reduces the impact of potential Apache vulnerabilities.
 
 # Usage
 Below we talk about how to install and configure the container. 
@@ -8,7 +67,7 @@ You can quick-start this image by running:
 
 ```
 mkdir -p ~/5etools-docker/htdocs && cd ~/5etools-docker
-curl -o docker-compose.yml https://raw.githubusercontent.com/Jafner/5etools-docker/main/docker-compose.yml
+curl -o docker-compose.yml https://raw.githubusercontent.com/Sakujakira/5etools-docker/refs/heads/main/docker-compose.yml
 docker-compose up -d && docker logs -f 5etools-docker
 ```
 
@@ -55,8 +114,8 @@ By default, I assume you want to automatically download the latest files from th
 ### IMG (defaults to FALSE)
 Required unless OFFLINE_MODE=TRUE.
 Expects one of "TRUE", "FALSE" Where:  
-  > "TRUE" pulls from https://github.com/5etools-mirror-2/5etools-mirror-2.github.io.git and adds https://github.com/5etools-mirror-2/5etools-img as a submodule for image files.
-  > "FALSE" pulls from https://github.com/5etools-mirror-2/5etools-mirror-2.github.io.git without image files.  
+  > "TRUE" pulls from https://github.com/5etools-mirror-3/5etools-src and adds https://github.com/5etools-mirror-3/5etools-img as a submodule for image files.
+  > "FALSE" pulls from https://github.com/5etools-mirror-3/5etools-src without image files.  
 
 The get.5e.tools source has been down (redirecting to 5e.tools) during development. This method is not tested.  
 
@@ -64,8 +123,21 @@ The get.5e.tools source has been down (redirecting to 5e.tools) during developme
 Optional. Expects "TRUE" to enable. 
 Setting this to true tells the server to run from the local files if available, or exits if there is no local version. 
 
-### PUID and PGID
-During the image build process, we set the owner of the `htdocs` directory to `1000:1000` by default. If you need a different UID and GID to own the files, you can build the image from the source Dockerfile and pass the PUID and PGID variables as desired.
+### PUID and PGID (defaults to 1000)
+These environment variables control the user and group ownership of files in the container.
+
+```yaml
+environment:
+  - PUID=1001  # User ID
+  - PGID=1001  # Group ID
+```
+
+The container dynamically creates a user/group with the specified IDs at startup and:
+- Sets ownership of all downloaded files to PUID:PGID
+- Configures Apache worker processes to run as PUID:PGID
+- Ensures proper file permissions for your host system
+
+**Why this matters**: If your host user is UID 1001, set `PUID=1001` so you can easily edit files outside the container without permission issues.
 
 ## Integrating a reverse proxy
 Supporting integration of a reverse proxy is beyond the scope of this guide. 
@@ -103,4 +175,17 @@ Then your `index.json` should look like:
 ```
 
 Note the commas after each entry except the last in each array.
-See the [wiki page](https://wiki.5e.tools/index.php/5eTools_Install_Guide) for more information. 
+See the [wiki page](https://wiki.5e.tools/index.php/5eTools_Install_Guide) for more information.
+
+---
+
+## AI-Assisted Development Disclaimer
+
+This project was developed with assistance from Claude (Anthropic's AI assistant) for:
+- Documentation writing and formatting
+- Code reviews and security analysis
+- Identifying potential issues and suggesting improvements
+
+**However, all architectural decisions, implementation choices, and code changes were made by the repository maintainer.** The AI served as a development tool for analysis and documentation, not as the primary author of the codebase.
+
+The core improvements (Alpine migration, security enhancements, git operation fixes, and privilege separation) were designed and implemented by human developers. 

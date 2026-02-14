@@ -2,13 +2,13 @@ version: "3"
 services:
   5etools-docker:
     container_name: 5etools-docker
-    image: jafner/5etools-docker
+    image: ghcr.io/sakujakira/5etools-docker:latest
     volumes:
       - ~/5etools-docker/htdocs:/usr/local/apache2/htdocs
     ports:
      - 8080:80/tcp
     environment:
-     - IMG=FALSE # Set to TRUE to pull images from https://github.com/5etools-mirror-2/5etools-img (as a Git submodule)
+     - IMG=FALSE # Set to TRUE to pull images from https://github.com/5etools-mirror-3/5etools-img (as a Git submodule)
      #- OFFLINE_MODE=TRUE # Optional. Expects "TRUE" or "FALSE". Disables checking for new updates.
 
 # Uncomment this block to use a docker-managed volume:
