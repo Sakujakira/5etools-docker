@@ -7,20 +7,23 @@ This project is based on the original repository: https://github.com/Jafner/5eto
 This fork provides several improvements over the original implementation:
 
 ### Image Size & Security
-| Metric | This Image (Alpine) | Original (Debian) | Improvement |
-|--------|---------------------|-------------------|-------------|
-| **Image Size** | 77 MB | 279 MB | **3.6× smaller** |
-| **Packages** | 62 | 224 | **3.6× fewer** |
-| **Total CVEs** | 55 | 173 | **68% fewer vulnerabilities** |
-| **Critical CVEs** | 2 | 7 | **71% fewer critical** |
-| **High CVEs** | 18 | 34 | **47% fewer high** |
+| Metric | This Image (Alpine 3.23) | Original (Debian 12) | Improvement |
+|--------|--------------------------|----------------------|-------------|
+| **Image Size** | 76 MB | 279 MB | **3.7× smaller** |
+| **Packages** | 66 | 224 | **3.4× fewer** |
+| **Total CVEs** | 10 | 173 | **94% fewer vulnerabilities** |
+| **Critical CVEs** | 0 | 7 | **100% elimination** ✅ |
+| **High CVEs** | 0 | 34 | **100% elimination** ✅ |
+| **Medium CVEs** | 8 | 39 | **79% fewer** |
+| **Low CVEs** | 2 | 95 | **98% fewer** |
 
 *CVE data from Docker Scout as of February 2026*
 
 ### Key Differences
-- **Base Image**: Alpine Linux 3.20 vs Debian 12 (Bookworm)
-- **Smaller Attack Surface**: Fewer packages means fewer potential vulnerabilities
-- **Active Maintenance**: Updated dependencies and security patches
+- **Base Image**: Alpine Linux 3.23 (latest) vs Debian 12 (Bookworm)
+- **Zero Critical/High CVEs**: All critical and high-severity vulnerabilities eliminated
+- **Smaller Attack Surface**: 3.4× fewer packages means significantly fewer potential vulnerabilities
+- **Active Maintenance**: Always uses latest Alpine version with most recent security patches
 - **Improved Git Operations**: Robust handling of repository updates with `git reset --hard` + `git pull`
 - **Enhanced Security Model**: See Security section below
 

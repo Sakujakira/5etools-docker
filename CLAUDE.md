@@ -22,7 +22,7 @@ This is a Docker containerization of 5etools (D&D 5th edition tools) based on Al
 - `/usr/local/apache2/htdocs/` - Web root, mapped to host volume for persistence
 - `/init.sh` - Container entry point script
 
-**Base Image:** `httpd:alpine3.20` (Alpine-based Apache)
+**Base Image:** `httpd:2-alpine` (Latest Alpine-based Apache - currently Alpine 3.23)
 
 **Source Repositories:**
 - Main content: `https://github.com/5etools-mirror-3/5etools-src.git`

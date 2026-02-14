@@ -1,4 +1,4 @@
-FROM httpd:alpine3.20
+FROM httpd:2-alpine
 
 ARG PUID=1000
 ARG PGID=1000
