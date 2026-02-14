@@ -81,7 +81,7 @@ jobs:
         TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
       with:
         #image-ref: ghcr.io/${{ github.repository }}:latest
-        image-ref: 'ghcr.io/${{ github.repository }}:${{ github.sha }}'
+        image-ref: 'docker.io/${{ github.repository }}:${{ github.sha }}'
         format: 'sarif'
         output: 'trivy-results.sarif'
         ignore-unfixed: true
