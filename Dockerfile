@@ -3,8 +3,7 @@ ENV PUID=${PUID:-1000} \
     PGID=${PGID:-1000}
 
 # Copy init.sh and set permissions
-COPY init.sh /init.sh
-RUN chmod +x /init.sh
+COPY --chmod=755 init.sh /init.sh
 
 # Install deps + cleanup (reduced CVEs/Bloat)
 RUN apt-get update && \
