@@ -23,12 +23,6 @@ RUN printf '<Location /server-status>\n\
 # htdocs clean + chown
 WORKDIR /usr/local/apache2/htdocs/
 RUN rm -rf * .[!.]* ..?*
-#RUN rm -rf * .??* && \
-#    addgroup -g $PGID -S appgroup && \
-#    adduser -u $PUID -S -G appgroup appuser && \
-#    chown -R appuser:appgroup .
-
-
 
 # Labels for registry
 LABEL org.opencontainers.image.source="https://github.com/Sakujakira/5etools-docker" \
