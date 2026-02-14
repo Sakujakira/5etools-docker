@@ -1,68 +1,76 @@
-name: CI/CD
+name: Build & Push Docker (CI/CD)
 
 on:
-  # Triggers the workflow when changes are made to the image on the main branch
   push:
     branches: [ main ]
-    paths-ignore: # don't run this workflow if no changes have been made to the docker image
+    paths-ignore:
       - '.github/**'
       - 'docker-compose.yml'
       - 'README.md'
   pull_request:
     branches: [ main ]
-    paths-ignore: # don't run this workflow if no changes have been made to the docker image
+    paths-ignore:
       - '.github/**'
       - 'docker-compose.yml'
       - 'README.md'
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
-  ci:
-    name: Build and push Docker image to Docker Hub
+  build-push:
     runs-on: ubuntu-latest
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v2
-      
-      - name: Log into Docker Hub
-        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }} 
-      
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
-        with:
-          images: jafner/5etools-docker
-          tags: |
-            latest
-            type=edge
-            type=sha
-          
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@master
-        with:
-          platforms: all
+    permissions:
+      contents: read
+      packages: write
 
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@master
-      
-      - name: Build and push the Docker image
-        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
-        with:
-          context: .
-          builder: ${{ steps.buildx.outputs.name }}
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-      
-      - name: Docker Hub Description
-        uses: peter-evans/dockerhub-description@v2
-        with: 
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }} 
-          repository: jafner/5etools-docker
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Docker Hub Meta
+      id: meta
+      uses: docker/metadata-action@v5  # Neueste
+      with:
+        images: |
+          ghcr.io/${{ github.repository }}
+          docker.io/${{ secrets.DOCKERHUB_USERNAME }}/5etools-docker
+        tags: |
+          type=raw,value=latest,enable={{is_default_branch}}
+          type=raw,value=main,enable={{is_default_branch}}
+          type=sha
+        labels: |
+          org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+
+    - name: Login GHCR
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Login Docker Hub
+      uses: docker/login-action@v3
+      with:
+        registry: docker.io
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Build & Push
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        push: ${{ github.event_name != 'pull_request' }}
+        platforms: linux/amd64,linux/arm64,linux/arm/v7
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Docker Hub Description
+      if: github.event_name != 'pull_request'
+      uses: peter-evans/dockerhub-description@v4  # Neueste
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+        repository: 5etools-docker
+        description: |
+          5eTools Docker Container - Ein benutzerfreundlicher und vielseitiger Container für die 5eTools-Webanwendung, optimiert für einfache Bereitstellung und Wartung.
