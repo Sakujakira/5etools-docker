@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Print current user ID
 id
