@@ -80,8 +80,7 @@ jobs:
         TRIVY_USERNAME: ${{ github.actor }}
         TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
       with:
-        image-ref: 'ghcr.io/${{ github.repository }}:sha-${{ github.sha }}'
-        #image-ref: 'docker.io/${{ secrets.DOCKERHUB_USERNAME }}/5etools-docker:sha-${{ github.sha }}'
+        image-ref: 'ghcr.io/${{ github.repository }}@${{ steps.build.outputs.digest }}'
         format: 'sarif'
         output: 'trivy-results.sarif'
         ignore-unfixed: true
