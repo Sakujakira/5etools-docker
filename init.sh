@@ -66,7 +66,6 @@ if [ "$IMG" = "TRUE" ]; then # if user wants images
 fi
 
 printf " === Pulling latest files from GitHub...\n"
-#git fetch origin --depth=1
 git reset --hard origin/HEAD
 git pull origin main --depth=1
 if [ -f /usr/local/apache2/htdocs/package.json ]; then
