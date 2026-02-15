@@ -263,7 +263,7 @@ Then your `index.json` should look like:
 }
 ```
 
-**Note**: The `IS_DEPLOYED` flag in `js/utils.js` is automatically set to the deployed version number during the build process, enabling homebrew support. You don't need to manually edit this file.
+**Note**: The `IS_DEPLOYED` flag in `js/utils.js` is automatically set to the deployed version number during the build process (properly quoted as a string literal), enabling homebrew support. You don't need to manually edit this file.
 
 Note the commas after each entry except the last in each array.
 See the [5eTools Install Guide](https://wiki.tercept.net/en/5eTools/InstallGuide) for more information.
