@@ -95,7 +95,7 @@ cleanup_working_build_directory() {
         /usr/local/apache2/htdocs/img/SVGs.zip \
         /usr/local/apache2/htdocs/LICENSE.md
 
-    sed '/globalThis\.IS_DEPLOYED = undefined;/s/undefined/'${VERSION}'/' /usr/local/apache2/htdocs/js/utils.js
+    sed -i '/globalThis\.IS_DEPLOYED = undefined;/s/undefined/'${VERSION}'/' /usr/local/apache2/htdocs/js/utils.js
 }
 
 cleanup_working_img_directory() {
@@ -117,7 +117,6 @@ cleanup_working_img_directory() {
 #################################### !Main script starts here! ####################################             
 ###################################################################################################
 
-get_remote_version
 print_startup_info
 
 # If User and group don't exist, create them. If they do exist, ignore the error and continue.
@@ -142,6 +141,8 @@ if [ "$OFFLINE_MODE" = "TRUE" ]; then
   fi
 fi
 
+get_remote_version
+
 # Move to the working directory for working with files.
 cd /usr/local/apache2/htdocs || exit
 
@@ -158,9 +159,9 @@ if [ ! -f "/usr/local/apache2/htdocs/package.json" ]; then
     printf " === No existing git repository, creating one\n"
     init_git
     build_project
-elif [ -f "/usr/local/apache2/htdocs/package.json" ] && [ "$(jq -r .version /usr/local/apache2/htdocs/package.json)" -eq "$VERSION" ]; then
+elif [ -f "/usr/local/apache2/htdocs/package.json" ] && [ "$(jq -r .version /usr/local/apache2/htdocs/package.json)" = "${VERSION#v}" ]; then
     printf " === Local version matches remote version (%s), skipping git pull\n" "$VERSION"
-elif [ -f "/usr/local/apache2/htdocs/package.json" ] && [ "$(jq -r .version /usr/local/apache2/htdocs/package.json)" != "$VERSION" ]; then
+elif [ -f "/usr/local/apache2/htdocs/package.json" ] && [ "$(jq -r .version /usr/local/apache2/htdocs/package.json)" != "${VERSION#v}" ]; then
     printf " === Local version does not match remote version, resetting local files\n"
     rm -rf /usr/local/apache2/htdocs/* # Remove all files in htdocs, including .git and package.json
     init_git
@@ -199,8 +200,9 @@ fi
 if [ "$IMG" = "TRUE" ]; then # if user wants images
     if [ -d /root/.cache/git/.git ]; then
         printf " === Existing git cache for img repository found, using it to speed up the pull\n"
+        mkdir -p /usr/local/apache2/htdocs/img
         mv /root/.cache/git/.git /usr/local/apache2/htdocs/img/.git
-        git fetch --depth=1 origin main /usr/local/apache2/htdocs/img && git reset --hard origin/main
+        git -C /usr/local/apache2/htdocs/img fetch --depth=1 origin main && git -C /usr/local/apache2/htdocs/img reset --hard origin/main
         cleanup_working_img_directory
     else
         printf " === No existing git cache for img repository, creating one\n"
