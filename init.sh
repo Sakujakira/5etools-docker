@@ -163,14 +163,14 @@ elif [ -f "/usr/local/apache2/htdocs/package.json" ] && [ "$(jq -r .version /usr
     printf " === Local version matches remote version (%s), skipping git pull\n" "$VERSION"
 elif [ -f "/usr/local/apache2/htdocs/package.json" ] && [ "$(jq -r .version /usr/local/apache2/htdocs/package.json)" != "${VERSION#v}" ]; then
     printf " === Local version does not match remote version, resetting local files\n"
-    rm -rf /usr/local/apache2/htdocs/* # Remove all files in htdocs, including .git and package.json
+    rm -rf /usr/local/apache2/htdocs/* /usr/local/apache2/htdocs/.[!.]* /usr/local/apache2/htdocs/..?* # Remove all files in htdocs, including dotfiles such as .git
     init_git
     build_project
 else
     printf " === Unexpected state, exiting\n"
     printf " === Probably means that package.json is malformed.\n"
     printf " === Resetting the local files...\n"
-    rm -rf /usr/local/apache2/htdocs/* # Remove all files in htdocs, including .git and package.json
+    rm -rf /usr/local/apache2/htdocs/* /usr/local/apache2/htdocs/.[!.]* /usr/local/apache2/htdocs/..?* # Remove all files in htdocs, including dotfiles such as .git
     init_git
     build_project
 fi
