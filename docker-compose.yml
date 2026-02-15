@@ -1,16 +1,21 @@
-version: "3"
+volumes:
+  htdocs:
+  logs:
+  git-cache:
+
 services:
   5etools-docker:
     container_name: 5etools-docker
     image: ghcr.io/sakujakira/5etools-docker:latest
     volumes:
-      - ~/5etools-docker/htdocs:/usr/local/apache2/htdocs
+      - htdocs:/usr/local/apache2/htdocs
+      - logs:/usr/local/apache2/logs
+      - git-cache:/root/.cache/git
     ports:
      - 8080:80/tcp
     environment:
-     - IMG=FALSE # Set to TRUE to pull images from https://github.com/5etools-mirror-3/5etools-img (as a Git submodule)
-     #- OFFLINE_MODE=TRUE # Optional. Expects "TRUE" or "FALSE". Disables checking for new updates.
-
-# Uncomment this block to use a docker-managed volume:
-#volumes:
-#  5etools-docker:
+     #- IMG=FALSE # Optional. Default to FALSE. Set to TRUE to pull images from https://github.com/5etools-mirror-3/5etools-img
+     #- OFFLINE_MODE=TRUE # Optional. Default to FALSE Disables checking for new updates.
+     #- NPM_AUDIT_FORCE_FIX=TRUE # Optional. Default to FALSE. Set to TRUE to run npm audit fix with --force flag using this can potentially introduce breaking changes, so use with caution. This is useful to fix vulnerabilities that cannot be fixed with the regular npm audit fix command.
+     #- SEO_OPTION=TRUE # Optional. Default to FALSE. Set to TRUE to build SEO optimized version of the site. See https://wiki.tercept.net/en/5eTools/InstallGuide for more information.
+    restart: unless-stopped
