@@ -97,7 +97,7 @@ cleanup_working_build_directory() {
         /usr/local/apache2/htdocs/img/SVGs.zip \
         /usr/local/apache2/htdocs/LICENSE.md
 
-        sed -i '/globalThis\.IS_DEPLOYED = undefined;/s/undefined/'"${VERSION}"'/' "/usr/local/apache2/htdocs/js/utils.js" 
+        sed -i '/globalThis\.IS_DEPLOYED = undefined;/s/undefined/"'"${VERSION}"'"/' "/usr/local/apache2/htdocs/js/utils.js" 
 }
 
 cleanup_working_img_directory() {
