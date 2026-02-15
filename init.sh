@@ -27,7 +27,7 @@ get_remote_version() {
 # Purpose is to provide useful information for debugging and to confirm that the container is using the expected configuration.
 print_startup_info() {
     printf " === Starting 5etools Docker Container ===\n"
-    if $PUID -eq 1000 && $PGID -eq 1000; then
+    if [ "$PUID" -eq 1000 ] && [ "$PGID" -eq 1000 ]; then
         printf " === No PUID or PGID provided, using defaults (1000:1000)\n"
     else
         printf " === Custom PUID or PGID provided, using %s:%s\n" "$PUID" "$PGID"
@@ -156,6 +156,8 @@ ls -ld /usr/local/apache2/htdocs
 printf " === Using GitHub mirror at %s\n" "$DL_LINK"
 if [ ! -f "/usr/local/apache2/htdocs/package.json" ]; then
     printf " === No existing package.json found, assuming empty directory\n"
+    printf " === Cleaning directory before git clone\n"
+    rm -rf /usr/local/apache2/htdocs/* /usr/local/apache2/htdocs/.[!.]* /usr/local/apache2/htdocs/..?* # Remove all files/dirs to ensure clean clone
     printf " === No existing git repository, creating one\n"
     init_git
     build_project
