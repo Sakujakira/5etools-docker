@@ -43,6 +43,8 @@ print_startup_info() {
 
 # Since there are multiple places where we need to configure git, we will use a function to do it. This ensures that all git operations use the same configuration and reduces code duplication.
 init_git() {
+    git config --global core.compression 0 # Disable compression to speed up git operations, since we are throwing away the .git directory after pulling the latest version, we don't need the compression and it can actually slow down the process.
+    git config --global http.postBuffer 524288000 # Set postBuffer to 500MB to prevent issues with large repositories
     git config --global user.email "autodeploy@localhost"
     git config --global user.name "AutoDeploy"
     git config --global pull.rebase false # Squelch nag message
@@ -94,6 +96,8 @@ cleanup_working_build_directory() {
         /usr/local/apache2/htdocs/img/NOTES_FAVICON.md \
         /usr/local/apache2/htdocs/img/SVGs.zip \
         /usr/local/apache2/htdocs/LICENSE.md
+
+        sed -i '/globalThis\.IS_DEPLOYED = undefined;/s/undefined/'"${VERSION}"'/' "/usr/local/apache2/htdocs/js/utils.js" 
 }
 
 cleanup_working_img_directory() {
@@ -208,7 +212,10 @@ if [ "$IMG" = "TRUE" ]; then # if user wants images
         printf " === No existing git cache for img repository, creating one\n"
         printf " === This will take a while, since the img repository is very large.\n"
         mkdir -p /root/.cache/git
-        git clone --depth=1 "$IMG_LINK" /usr/local/apache2/htdocs/img
+        printf " === Cloning img repository (%s) into /usr/local/apache2/htdocs/img ...\n" "$IMG_LINK"
+        git clone --depth=1 --progress "$IMG_LINK" /usr/local/apache2/htdocs/img
+        printf " === Img repository clone complete. Current HEAD:\n"
+        git -C /usr/local/apache2/htdocs/img rev-parse --short HEAD || true
         cleanup_working_img_directory
     fi  
 fi

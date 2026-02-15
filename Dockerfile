@@ -10,7 +10,7 @@ ENV PUID=$PUID \
 COPY --chmod=755 init.sh /init.sh
 
 # Install deps + cleanup (reduced CVEs/Bloat)
-RUN apk add --no-cache git jq su-exec npm curl && \
+RUN apk add --no-cache git jq npm curl && \
     rm -rf /var/cache/apk/*
 
 RUN printf '<Location /server-status>\n\
