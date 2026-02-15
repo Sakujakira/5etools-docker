@@ -6,13 +6,17 @@ on:
     paths-ignore:
       - '.github/**'
       - 'docker-compose.yml'
-      - 'README.md'
+      - '*.md'
+      - .gitignore
+      - .dockerignore
   pull_request:
     branches: [ main ]
     paths-ignore:
       - '.github/**'
       - 'docker-compose.yml'
-      - 'README.md'
+      - '*.md'
+      - .gitignore
+      - .dockerignore
   workflow_dispatch:
 
 jobs:
