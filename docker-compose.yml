@@ -11,7 +11,7 @@ services:
     volumes:
       - htdocs:/usr/local/apache2/htdocs
       - webserver_logs:/usr/local/apache2/logs
-      - application_logs:/usr/local/apache2/application_logs
+      - application_logs:/var/log/5etools-docker/application_logs
       - git-cache:/root/.cache/git
     ports:
      - 8080:80/tcp
