@@ -118,7 +118,8 @@ Files persist in Docker-managed named volumes. Use `docker-compose down -v` to r
 ### Default: Named Volumes (Recommended)
 By default, the container uses **Docker-managed named volumes** for data persistence:
 - `htdocs`: Built 5eTools files
-- `logs`: Apache logs
+- `webserver_logs`: Apache logs
+- `application_logs`: Application log volume
 - `git-cache`: Git repository cache for faster image updates
 
 This is the recommended approach as it:
@@ -134,7 +135,8 @@ If you need direct file access (e.g., for adding homebrew), use host-mounted vol
 ```yaml
 volumes:
   - ~/5etools-docker/htdocs:/usr/local/apache2/htdocs
-  - ~/5etools-docker/logs:/usr/local/apache2/logs
+  - ~/5etools-docker/webserver-logs:/usr/local/apache2/logs
+  - ~/5etools-docker/application-logs:/usr/local/apache2/application_logs
   - ~/5etools-docker/git-cache:/root/.cache/git
 ```
 
@@ -145,7 +147,8 @@ To use pre-created Docker volumes:
 
 ```bash
 docker volume create 5etools-htdocs
-docker volume create 5etools-logs
+docker volume create 5etools-webserver-logs
+docker volume create 5etools-application-logs
 docker volume create 5etools-git-cache
 ```
 
@@ -155,9 +158,12 @@ volumes:
   htdocs:
     external: true
     name: 5etools-htdocs
-  logs:
+  webserver_logs:
     external: true
-    name: 5etools-logs
+    name: 5etools-webserver-logs
+  application_logs:
+    external: true
+    name: 5etools-application-logs
   git-cache:
     external: true
     name: 5etools-git-cache
@@ -227,6 +233,14 @@ The container dynamically creates a user/group with specified IDs and:
 - Ensures proper file permissions for host-mounted volumes
 
 **Why this matters**: Match your host user's UID/GID to access files without permission issues when using host-mounted volumes.
+
+### LOG_LEVEL (default: INFO)
+Controls application log verbosity.
+
+```yaml
+environment:
+  - LOG_LEVEL=INFO  # Valid values: ERROR, WARN, INFO, DEBUG
+```
 
 ## Integrating a reverse proxy
 Supporting integration of a reverse proxy is beyond the scope of this guide. 

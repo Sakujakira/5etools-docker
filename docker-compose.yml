@@ -1,6 +1,7 @@
 volumes:
   htdocs:
-  logs:
+  webserver_logs:
+  application_logs:
   git-cache:
 
 services:
@@ -9,13 +10,15 @@ services:
     image: ghcr.io/sakujakira/5etools-docker:latest
     volumes:
       - htdocs:/usr/local/apache2/htdocs
-      - logs:/usr/local/apache2/logs
+      - webserver_logs:/usr/local/apache2/logs
+      - application_logs:/usr/local/apache2/application_logs
       - git-cache:/root/.cache/git
     ports:
      - 8080:80/tcp
     environment:
-     #- IMG=FALSE # Optional. Default to FALSE. Set to TRUE to pull images from https://github.com/5etools-mirror-3/5etools-img
-     #- OFFLINE_MODE=TRUE # Optional. Default to FALSE Disables checking for new updates.
-     #- NPM_AUDIT_FORCE_FIX=TRUE # Optional. Default to FALSE. Set to TRUE to run npm audit fix with --force flag using this can potentially introduce breaking changes, so use with caution. This is useful to fix vulnerabilities that cannot be fixed with the regular npm audit fix command.
-     #- SEO_OPTION=TRUE # Optional. Default to FALSE. Set to TRUE to build SEO optimized version of the site. See https://wiki.tercept.net/en/5eTools/InstallGuide for more information.
+      #- IMG=FALSE # Optional. Default to FALSE. Set to TRUE to pull images from https://github.com/5etools-mirror-3/5etools-img
+      #- OFFLINE_MODE=TRUE # Optional. Default to FALSE Disables checking for new updates.
+      #- NPM_AUDIT_FORCE_FIX=TRUE # Optional. Default to FALSE. Set to TRUE to run npm audit fix with --force flag using this can potentially introduce breaking changes, so use with caution. This is useful to fix vulnerabilities that cannot be fixed with the regular npm audit fix command.
+      #- SEO_OPTION=TRUE # Optional. Default to FALSE. Set to TRUE to build SEO optimized version of the site. See https://wiki.tercept.net/en/5eTools/InstallGuide for more information.
+      #- LOG_LEVEL=INFO # Optional. Default to info. Set the log level for the application. Valid values are: ERROR, WARN, INFO, DEBUG.
     restart: unless-stopped

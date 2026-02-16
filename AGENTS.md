@@ -313,3 +313,5 @@ The GitHub Actions workflow (`.github/workflows/ci_cd.yml`) automatically:
 - Test with workflow_dispatch before merging
 - Changes to .github/**, docker-compose.yml, *.md, .gitignore, .dockerignore are ignored by CI trigger (use workflow_dispatch)
 - Documentation updates don't trigger builds automatically
+
+Operational note: prioritize deterministic startup behavior and runtime safety over aggressive optimization. In practice, preserve the current order of operations in `init.sh` (version check, clone/update, build, cleanup, ownership fix, Apache start), keep network-dependent steps optional through environment flags (`OFFLINE_MODE`, `IMG`, `SEO_OPTION`), and validate that any new cleanup or security hardening does not remove files required by the served application or break Apache worker privilege dropping via `User`/`Group` directives.
