@@ -11,15 +11,18 @@
 # 3 ERROR - Provides all but debug, info and warn
 
 LOG_LEVEL=${LOG_LEVEL:-"INFO"}
+message_priority=""
+configured_priority="" # Default to INFO
+
 
 init_log() {
     if [ -n "$LOG_LEVEL" ]; then
         case "$LOG_LEVEL" in
-            "DEBUG") printf "Log level set to DEBUG\n" ;;
-            "INFO") printf "Log level set to INFO\n" ;;
-            "WARN") printf "Log level set to WARN\n" ;;
-            "ERROR") printf "Log level set to ERROR\n" ;;
-            *) printf "Invalid LOG_LEVEL: %s. Defaulting to INFO." "$LOG_LEVEL"; LOG_LEVEL="INFO" ;;
+            "DEBUG") configured_priority=10 ;;
+            "INFO") configured_priority=20 ;;
+            "WARN") configured_priority=30 ;;
+            "ERROR") configured_priority=40 ;;
+            *) printf "Invalid LOG_LEVEL: %s. Defaulting to INFO." "$LOG_LEVEL"; LOG_LEVEL="INFO"; configured_priority=20 ;;
         esac
     fi
 
@@ -41,35 +44,39 @@ log() {
     log_message="$1"
     log_level="${2:-"INFO"}"
 
+    if [ $# -lt 1 ]; then
+        log "No message provided to log function.\n" "DEBUG"
+        return 1
+    elif [ $# -gt 2 ]; then
+        log "Too many arguments provided to log function. Only message and optional log level are accepted.\n" "DEBUG"
+    fi
+
     case "$log_level" in
-        "DEBUG")
-            if [ "$LOG_LEVEL" = "DEBUG" ] || [ "$LOG_LEVEL" = "INFO" ] || [ "$LOG_LEVEL" = "WARN" ] || [ "$LOG_LEVEL" = "ERROR" ]; then
-                write_log "$log_message" "DEBUG"
-            fi
-            ;;
-        "INFO")
-            if [ "$LOG_LEVEL" = "INFO" ] || [ "$LOG_LEVEL" = "WARN" ] || [ "$LOG_LEVEL" = "ERROR" ]; then
-                write_log "$log_message" "INFO"
-            fi
-            ;;
-        "WARN")
-            if [ "$LOG_LEVEL" = "WARN" ] || [ "$LOG_LEVEL" = "ERROR" ]; then
-                write_log "$log_message" "WARN"
-            fi
-            ;;
-        "ERROR")
-            if [ "$LOG_LEVEL" = "ERROR" ]; then
-                write_log "$log_message" "ERROR"
-            fi
-            ;;
-        *)
-            write_log "Invalid log level: $log_level. Message: $log_message" "ERROR"
-            ;;
+        "DEBUG") message_priority=10 ;;
+        "INFO") message_priority=20 ;;
+        "WARN") message_priority=30 ;;
+        "ERROR") message_priority=40 ;;
+        *) message_priority=20;log_level="INFO" ;; # Default to INFO if invalid log level is provided
     esac
+
+    if [ "$message_priority" -ge "$configured_priority" ]; then
+        write_log "$log_message" "$log_level"
+    fi    
 }
 
 write_log() {
     log_message="$1"
     log_level="$2"
-    printf "[%s] [%s] %s\n" "$(date '+%Y-%m-%d %H:%M:%S')" "$log_level" "$log_message" >> "$log_file"
+    log_line=$(printf "[%s] [%s] %s" "$(date '+%Y-%m-%d %H:%M:%S')" "$log_level" "$log_message")
+
+    case "$log_level" in
+        "ERROR"|"WARN")
+            printf "%s\n" "$log_line" >> "$log_file"
+            printf "%s\n" "$log_line" >&2
+            ;;
+        *)
+            printf "%s\n" "$log_line" >> "$log_file"
+            printf "%s\n" "$log_line"
+            ;;
+    esac
 }
