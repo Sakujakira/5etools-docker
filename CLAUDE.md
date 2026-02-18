@@ -308,6 +308,8 @@ The GitHub Actions workflow (`.github/workflows/ci_cd.yml`) automatically:
 - Use `docker-compose down -v` to remove volumes for clean slate
 - New environment variables should be documented with comments
 - `restart: unless-stopped` ensures container auto-restarts on failure
+- Do not encourage direct internet exposure of the app container; recommend reverse proxy + TLS
+- Preferred reverse proxy examples: `linuxserver/swag`, `Caddy`, `Traefik`
 
 **For CI/CD changes:**
 - Test with workflow_dispatch before merging

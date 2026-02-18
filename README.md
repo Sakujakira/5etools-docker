@@ -228,9 +228,25 @@ The container dynamically creates a user/group with specified IDs and:
 
 **Why this matters**: Match your host user's UID/GID to access files without permission issues when using host-mounted volumes.
 
-## Integrating a reverse proxy
-Supporting integration of a reverse proxy is beyond the scope of this guide. 
-However, any instructions which work for the base `httpd` (Apache) image, should also work for this, as it is minimally different.
+## Reverse Proxy and TLS (Recommended)
+Do not expose this container directly to the public internet.
+
+Recommended deployment pattern:
+- Run this container on an internal Docker network
+- Terminate TLS at a reverse proxy
+- Publish only the reverse proxy ports (80/443)
+
+This project recommends using one of these reverse proxies:
+- `linuxserver/swag`
+- `Caddy`
+- `Traefik`
+
+Examples for these proxy options are planned in the repository examples section.
+
+### Why this is recommended
+- Centralized TLS certificate management and HTTPS redirects
+- Cleaner security controls (headers, access rules, optional auth)
+- Better separation between application container and internet-facing edge
 
 # Auto-loading homebrew
 To use auto-loading homebrew, you will need to use a **host directory mapping** (not named volumes). Update your `docker-compose.yml` to use host-mounted volumes as described in the Volume Mapping section above.
