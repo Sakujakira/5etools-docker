@@ -17,6 +17,7 @@ This is a Docker containerization of 5etools (D&D 5th edition tools) based on Al
    - Clones source repository if needed (shallow clone --depth=1)
    - Builds project at runtime using `npm ci`, `npm audit fix`, and `npm run build:sw:prod`
    - Optionally builds SEO-optimized version if SEO_OPTION=TRUE
+   - Sets globalThis.IS_DEPLOYED in js/utils.js to proper version string with quotes
    - Removes build artifacts and git metadata (.git, .github, node_modules, etc.) for security
 4. Optionally clones images repository if IMG=TRUE:
    - Uses git cache at `/root/.cache/git` to speed up subsequent pulls
@@ -175,6 +176,7 @@ The GitHub Actions workflow (`.github/workflows/ci_cd.yml`) automatically:
   - `npm audit fix` - Fixes vulnerabilities (optionally with --force)
   - `npm run build:sw:prod` - Builds service worker
   - `npm run build:seo` - Optional SEO build
+  - **Sets IS_DEPLOYED with proper quoting:** `sed -i '/globalThis\.IS_DEPLOYED = undefined;/s/undefined/"'"${VERSION}"'"/' "/usr/local/apache2/htdocs/js/utils.js"`
 - **Security cleanup:** Removes .git, .github, node_modules, and other artifacts after build
 - **Image handling (IMG=TRUE):**
   - No longer uses git submodules
@@ -209,9 +211,9 @@ The GitHub Actions workflow (`.github/workflows/ci_cd.yml`) automatically:
    adduser -D -u "$PUID" appuser -G appgroup 2>/dev/null || true
    ```
 
-2. ✅ **File ownership timing** - `chown` executes AFTER all operations (critical for proper ownership):
+2. ✅ **File ownership timing** - `chown` executes AFTER all git operations (critical for proper ownership):
    ```sh
-   # All git operations, npm builds, and cleanup first
+   # All git operations first (clone, reset, pull)
    # ...then chown at the end:
    chown -R "$PUID":"$PGID" /usr/local/apache2/htdocs
    chown -R "$PUID":"$PGID" /usr/local/apache2/logs
@@ -250,15 +252,17 @@ The GitHub Actions workflow (`.github/workflows/ci_cd.yml`) automatically:
 
 11. ✅ **Git cache for images** - Reuses .git from `/root/.cache/git` to speed up updates
 
-12. ✅ **CI/CD multi-arch** - QEMU and buildx setup steps present in workflow
+12. ✅ **IS_DEPLOYED quoting** - Properly quotes VERSION in sed replacement: `"'"${VERSION}"'"`
 
-13. ✅ **docker-compose.yml** - Points to GHCR: `ghcr.io/sakujakira/5etools-docker:latest`, uses named volumes
+13. ✅ **CI/CD multi-arch** - QEMU and buildx setup steps present in workflow
 
-14. ✅ **.dockerignore** - Excludes .git, .github, .claude directories
+14. ✅ **docker-compose.yml** - Points to GHCR: `ghcr.io/sakujakira/5etools-docker:latest`, uses named volumes
 
-15. ✅ **Trivy vulnerability scanning** - Automated security scanning on every push
+15. ✅ **.dockerignore** - Excludes .git, .github, .claude directories
 
-16. ✅ **Dependabot configuration** - Automated dependency updates (daily Docker, weekly Actions)
+16. ✅ **Trivy vulnerability scanning** - Automated security scanning on every push
+
+17. ✅ **Dependabot configuration** - Automated dependency updates (daily Docker, weekly Actions)
 
 **Security Status:**
 - ✅ Apache worker processes run as non-root (PUID:PGID) - Apache handles privilege dropping natively
@@ -296,6 +300,7 @@ The GitHub Actions workflow (`.github/workflows/ci_cd.yml`) automatically:
 8. **Build process:** npm ci → npm audit fix → npm run build:sw:prod → optional SEO build → cleanup
 9. **Git cache:** Ensure img repository .git is properly cached/restored from `/root/.cache/git`
 10. Test version comparison logic (local vs remote package.json)
+11. **IS_DEPLOYED:** Verify proper quoting in sed command for js/utils.js modification
 
 **For docker-compose.yml changes:**
 - Uses named volumes (htdocs, logs, git-cache) instead of host-mounted volumes

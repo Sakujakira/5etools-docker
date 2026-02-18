@@ -2,27 +2,20 @@
 
 This document tracks planned improvements and enhancements for the project.
 
-## 🔥 High Priority (Quick Wins)
+## High Priority
 
-### Security & Automation
-- [x] **Add Dependabot configuration** (.github/dependabot.yml) ✅
-  - Auto-update Docker base image (daily)
-  - Weekly checks for GitHub Actions updates
-  - Auto-create PRs for dependency updates
+### Status: Open
 
-- [x] **Add container scanning to CI/CD** ✅
-  - Integrated Trivy scanner
-  - Scans on every push to main
-  - Reports all CVEs (Critical, High, Medium)
-  - Uploads SARIF results to GitHub Security tab
-
-- [ ] **Create SECURITY.md**
+#### Security & Automation
+- [ ] **Create `SECURITY.md`**
   - Document security policy
   - Vulnerability reporting process
   - Security update timeline
+  - Define supported versions and security maintenance window
+  - Define security contact and responsible disclosure steps
 
-### Docker & Deployment
-- [ ] **Enhance docker-compose.yml with best practices**
+#### Docker & Deployment
+- [ ] **Enhance `docker-compose.yml` with best practices**
   - Add `restart: unless-stopped` policy
   - Add resource limits (CPU, memory)
   - Add logging configuration with rotation
@@ -31,26 +24,100 @@ This document tracks planned improvements and enhancements for the project.
   - Add container labels for organization
   - Add named network
 
-- [ ] **Create .env.example**
+- [ ] **Create `.env.example`**
   - Document all environment variables
   - Provide sensible defaults
   - Include usage examples
 
-### CI/CD
+- [ ] **Document reverse proxy requirement**
+  - Explicitly discourage direct internet exposure of the container
+  - Recommend reverse proxy with SSL/TLS as the supported deployment pattern
+  - Add a short security rationale (TLS, header handling, access control)
+
+- [ ] **Replace simple HTTP healthcheck with state-aware validation**
+  - Validate service readiness beyond "port responds"
+  - Verify critical runtime state (download/build completed successfully)
+  - Fail healthcheck when required files/state markers are missing
+  - Keep the check fast and deterministic for container orchestrators
+
+- [ ] **Use explicit readiness marker for container health**
+  - Write marker only after successful download/build/init sequence
+  - Reference marker in healthcheck/readiness logic
+  - Clear marker before update/rebuild to avoid stale healthy state
+
+- [ ] **Implement clean container stop process**
+  - Handle `SIGTERM`/`SIGINT` explicitly in `init.sh`
+  - Ensure Apache shuts down gracefully on container stop
+  - Wait for child processes to exit cleanly within timeout
+  - Exit with clear logs and predictable status codes
+
+- [ ] **Make updates atomic with rollback safety**
+  - Download/build in temporary working directory
+  - Swap into live `htdocs` only after successful validation
+
+#### CI/CD
 - [ ] **Add basic container testing in CI**
   - Test container starts successfully
   - Verify healthcheck passes
   - Test with different PUID/PGID values
   - Test OFFLINE_MODE
+  - Test `IMG=TRUE` and `IMG=FALSE`
 
----
+#### Source Acquisition
+- [ ] **Evaluate alternative static source strategies**
+  - Compare GitHub repo clone vs GitHub artifacts vs `get.5e.tools`
+  - Measure cold-start and warm-start download times
+  - Measure reliability and failure behavior (timeouts, rate limits)
+  - Evaluate reproducibility and version pinning options
+  - Evaluate integrity verification options (checksum/signature)
+  - Document recommendation with decision criteria and tradeoffs
 
-## 📋 Medium Priority
+- [ ] **Add experimental download mode switching**
+  - Add `DOWNLOAD_MODE` env var (`git`, `artifact`, `get5e`)
+  - Add a dedicated download function per mode in `init.sh`
+  - Add fallback chain (`get5e` -> `artifact` -> `git`) if source fails
+  - Add version and integrity validation after download
+  - Log source mode, selected version, and elapsed download time
 
-### Documentation
+- [ ] **Add source comparison test matrix**
+  - Test fresh volume vs pre-populated volume behavior
+  - Test interaction with `OFFLINE_MODE`
+  - Test with `IMG=TRUE` and `IMG=FALSE`
+  - Test with custom `PUID`/`PGID`
+  - Simulate network failure and verify fallback behavior
+
+- [ ] **Add strict `OFFLINE_MODE` guardrails**
+  - Fail fast when required files are missing in offline mode
+  - Print clear remediation steps in logs
+
+- [ ] **Support source/version pinning**
+  - Allow pinning to explicit version/tag/commit for reproducible deployments
+  - Record resolved version in startup logs
+
+### Status: Completed
+
+#### Core Platform
+- [x] Migrate from Debian to Alpine Linux
+- [x] Upgrade to `httpd:2-alpine` for latest security patches
+- [x] Implement Apache-native privilege dropping
+- [x] Fix file ownership timing
+- [x] Fix Apache config syntax
+
+#### Security & Automation
+- [x] Achieve zero critical/high CVEs
+- [x] Add `.dockerignore`
+- [x] Add Dependabot configuration (daily Docker checks, weekly GitHub Actions)
+- [x] Add Trivy container scanning to CI/CD pipeline
+- [x] Integrate GitHub Security tab with SARIF uploads
+
+## Medium Priority
+
+### Status: Open
+
+#### Documentation
 - [ ] **Add GitHub issue templates**
-  - Bug report template (.github/ISSUE_TEMPLATE/bug_report.yml)
-  - Feature request template (.github/ISSUE_TEMPLATE/feature_request.yml)
+  - Bug report template (`.github/ISSUE_TEMPLATE/bug_report.yml`)
+  - Feature request template (`.github/ISSUE_TEMPLATE/feature_request.yml`)
   - Question template
 
 - [ ] **Add Pull Request template**
@@ -58,7 +125,7 @@ This document tracks planned improvements and enhancements for the project.
   - Checklist for contributors
   - Testing verification steps
 
-- [ ] **Create CONTRIBUTING.md**
+- [ ] **Create `CONTRIBUTING.md`**
   - Contribution guidelines
   - Code style requirements
   - How to test changes
@@ -66,10 +133,15 @@ This document tracks planned improvements and enhancements for the project.
 
 - [ ] **Add examples directory**
   - Example docker-compose configurations
-  - Reverse proxy examples (Traefik, Nginx)
+  - Reverse proxy examples (`linuxserver/swag`, Caddy, Traefik)
   - Different deployment scenarios
 
-### Developer Experience
+- [ ] **Add reverse proxy hardening guidance**
+  - Trusted proxy/header configuration examples
+  - TLS best practices and redirect policy
+  - Optional access control examples (e.g., basic auth)
+
+#### Developer Experience
 - [ ] **Create Makefile**
   - `make build` - Build image locally
   - `make test` - Run tests
@@ -83,7 +155,7 @@ This document tracks planned improvements and enhancements for the project.
   - Better logging configuration
   - Always restart policy
 
-### CI/CD Enhancements
+#### CI/CD
 - [ ] **Add release automation**
   - Semantic versioning tags
   - Automated changelog generation
@@ -95,11 +167,24 @@ This document tracks planned improvements and enhancements for the project.
   - Parallel builds if possible
   - Build time optimization
 
----
+### Status: Completed
 
-## 🎯 Low Priority (Nice to Have)
+#### CI/CD
+- [x] Add multi-arch support (amd64, arm64)
 
-### Scripts & Utilities
+#### Repository Hygiene
+- [x] Add `.gitignore`
+
+#### Documentation
+- [x] Create comprehensive `CLAUDE.md` documentation
+- [x] Add README comparison section with CVE data
+- [x] Add security section to README
+
+## Low Priority
+
+### Status: Open
+
+#### Scripts & Utilities
 - [ ] **Create scripts directory**
   - `backup.sh` - Backup htdocs data
   - `restore.sh` - Restore from backup
@@ -107,13 +192,13 @@ This document tracks planned improvements and enhancements for the project.
   - `health-check.sh` - Manual health verification
   - `clean-old-images.sh` - Clean up old Docker images
 
-### Monitoring & Observability
+#### Monitoring & Observability
 - [ ] **Add structured logging**
   - JSON formatted logs
   - Consistent log levels
   - Better error messages
 
-- [ ] **Add Prometheus metrics** (Optional)
+- [ ] **Add Prometheus metrics** (optional)
   - Apache exporter integration
   - Custom metrics for git operations
   - Container resource metrics
@@ -123,7 +208,7 @@ This document tracks planned improvements and enhancements for the project.
   - Prometheus configuration
   - Alert rules
 
-### Advanced Features
+#### Advanced Features
 - [ ] **Add backup/restore functionality**
   - Automated backup scheduling
   - S3 backup support
@@ -135,37 +220,20 @@ This document tracks planned improvements and enhancements for the project.
   - Email notifications
 
 - [ ] **Add development environment**
-  - docker-compose.dev.yml for local development
+  - `docker-compose.dev.yml` for local development
   - Hot reload for testing
   - Debug mode
 
----
+### Status: Completed
 
-## ✅ Completed
-
-- [x] Migrate from Debian to Alpine Linux
-- [x] Implement Apache-native privilege dropping
-- [x] Fix file ownership timing
-- [x] Fix Apache config syntax
-- [x] Add multi-arch support (amd64, arm64)
-- [x] Add .dockerignore
-- [x] Add .gitignore
-- [x] Create comprehensive CLAUDE.md documentation
-- [x] Add README comparison section with CVE data
-- [x] Add security section to README
+#### Documentation
 - [x] Add AI-assisted development disclaimer
-- [x] Upgrade to httpd:2-alpine for latest security patches
-- [x] Achieve zero critical/high CVEs
-- [x] Add Dependabot configuration (daily Docker checks, weekly GitHub Actions)
-- [x] Add Trivy container scanning to CI/CD pipeline
-- [x] Integrate GitHub Security tab with SARIF uploads
 
----
-
-## 📝 Notes
+## Operational Checklists
 
 ### Testing Checklist
 When implementing changes, verify:
+
 - [ ] Container builds successfully
 - [ ] Container starts and passes healthcheck
 - [ ] Apache runs as non-root (PUID/PGID)
@@ -176,17 +244,15 @@ When implementing changes, verify:
 - [ ] CVE count remains low
 
 ### Before Each Release
-- [ ] Update CLAUDE.md if architecture changes
-- [ ] Update README.md with any new features
+- [ ] Update `CLAUDE.md` if architecture changes
+- [ ] Update `README.md` with any new features
 - [ ] Run full security scan
 - [ ] Test on both architectures
 - [ ] Update version numbers if applicable
 - [ ] Create git tag
 - [ ] Update changelog
 
----
-
-## 🤝 Contributing
+## Contributing
 
 If you'd like to help with any of these items:
 1. Comment on or create an issue for the item
@@ -194,7 +260,5 @@ If you'd like to help with any of these items:
 3. Create a feature branch
 4. Submit a pull request
 
----
-
-*Last Updated: 2026-02-15*
-*Maintainer: Sakujakira*
+Last Updated: 2026-02-18
+Maintainer: Sakujakira
