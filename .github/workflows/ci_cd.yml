@@ -33,7 +33,7 @@ jobs:
 
     - name: Docker Hub Meta
       id: meta
-      uses: docker/metadata-action@v5  # Neueste
+      uses: docker/metadata-action@v6  # Neueste
       with:
         images: |
           ghcr.io/${{ github.repository }}
