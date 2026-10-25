@@ -9,8 +9,10 @@ ENV PUID=$PUID \
 # Copy init.sh and set permissions
 COPY --chmod=755 init.sh /init.sh
 
-# Install deps + cleanup (reduced CVEs/Bloat)
-RUN apk add --no-cache git jq npm curl && \
+# Refresh Alpine packages as well as installing runtime dependencies. The base
+# image tag can lag Alpine security repository rebuilds between upstream pushes.
+RUN apk upgrade --no-cache && \
+    apk add --no-cache git jq npm curl && \
     rm -rf /var/cache/apk/*
 
 RUN printf '<Location /server-status>\n\
