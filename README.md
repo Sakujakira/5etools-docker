@@ -7,25 +7,34 @@ This project is based on the original repository: https://github.com/Jafner/5eto
 This fork provides several improvements over the original implementation:
 
 ### Image Size & Security
-| Metric | This Image (Alpine 3.23) | Original (Debian 12) | Improvement |
-|--------|--------------------------|----------------------|-------------|
-| **Image Size** | 152 MB | 279 MB | **1.8x smaller** |
-| **Installed Packages** | 62 | 154 | **2.5x fewer** |
-| **Total CVEs** | 2 | 3525 | **substantially fewer** |
-| **Critical CVEs** | 0 | 14 | **100% elimination** |
-| **High CVEs** | 0 | 912 | **100% elimination** |
-| **Medium CVEs** | 1 | 2554 | **substantially fewer** |
-| **Low CVEs** | 1 | 45 | **substantially fewer** |
 
-*Measured on February 15, 2026 using local `docker build`, `docker image inspect`, `apk info`, and Trivy (`--ignore-unfixed`). Results vary over time as base images and vulnerability DBs change.*
+Current measurements use the `latest` images built from commit `bdda12a` on
+October 25, 2026. The original image was measured from its published `latest`
+tag (created February 17, 2024). Image size and package counts are directly
+comparable; vulnerability counts are intentionally not compared because they
+depend on the scanner database and scan configuration at a point in time.
+
+| Metric | This Image | Original Image | Improvement |
+|--------|------------|----------------|-------------|
+| **Local image size** | 152.2 MB | 278.5 MB | **1.8x smaller** |
+| **amd64 registry download** | 53.3 MB | 111.8 MB | **2.1x smaller** |
+| **Installed OS packages** | 60 | 154 | **2.6x fewer** |
+| **Open Trivy code-scanning alerts** | 0 | Not scanned with the same current database | — |
+| **HTTP2Shell components** | `brotli-libs 1.2.1-r0`, Node.js `24.22.1` | Not evaluated | Fixed in this image |
+
+The build refreshes Alpine packages with `apk upgrade --no-cache` before
+installing dependencies. This closes security fixes that have reached Alpine's
+repositories but are not yet present in the moving `httpd:2-alpine` base-image
+manifest. The current GitHub Actions Trivy scan found no open alerts at the
+configured Critical/High/Medium severities; it uses `ignore-unfixed: true`.
 
 ### Key Differences
-- **Base Image**: Alpine Linux 3.23 (latest) vs Debian 12 (Bookworm)
+- **Base Image**: Moving Apache `httpd:2-alpine` plus an Alpine package refresh during each build
 - **Runtime Build**: Builds project at startup following official 5eTools installation flow (npm ci, build:sw:prod, optional SEO)
-- **Zero Critical/High CVEs**: All critical and high-severity vulnerabilities eliminated ✅
-- **Smaller Attack Surface**: 2.5x fewer packages means significantly fewer potential vulnerabilities
-- **Active Maintenance**: Always uses latest Alpine version with most recent security patches
-- **Automated Security**: Dependabot + Trivy scanning on every build
+- **Current Security Scan**: No open Trivy findings at the configured Critical/High/Medium severities ✅
+- **Smaller Attack Surface**: 60 installed OS packages versus 154 in the original image
+- **Active Maintenance**: Daily rebuilds pull the current base image and refresh Alpine security packages
+- **Automated Security**: Dependabot plus pinned Trivy scanning on every published build
 - **Security Hardening**: Removes git metadata (.git, .github) and build artifacts after installation
 - **Smart Updates**: Compares local `package.json` version with remote release tag and rebuilds only when different
 - **Enhanced Security Model**: See Security section below
@@ -41,19 +50,20 @@ Alpine Linux is purpose-built for containers with minimal bloat. The smaller foo
 This project implements comprehensive automated security monitoring:
 
 **Continuous Integration/Deployment:**
-- Multi-architecture builds (linux/amd64, linux/arm64) on pushes/PRs to `main` except ignored paths (`.github/**`, `docker-compose.yml`, `*.md`, `.gitignore`, `.dockerignore`)
+- Multi-architecture builds (linux/amd64, linux/arm64) on relevant pushes/PRs to `main`, manual dispatches, and a daily scheduled rebuild at 04:17 UTC
 - Automated builds pushed to both GitHub Container Registry and Docker Hub
-- Docker build caching for faster iterations
+- Docker Buildx pulls the current moving base image before every build while retaining build caching for unchanged layers
 
 **Automated Vulnerability Scanning:**
-- **Trivy scanner** runs on every push to main branch
+- **Trivy scanner** runs after every published build (push, schedule, or manual dispatch)
 - Scans for OS and library vulnerabilities (Critical, High, Medium severity)
 - Results automatically uploaded to GitHub Security tab as SARIF reports
 - Build artifacts are scanned using image digest for accuracy
-- Secondary summary report highlights Critical/High vulnerabilities
+- Secondary summary report highlights Critical/High vulnerabilities without manufacturing a failed workflow step
 
 **Dependency Management:**
-- **Dependabot** monitors base images and GitHub Actions daily/weekly
+- **Dependabot** monitors declared Docker and GitHub Actions dependencies daily/weekly
+- The scheduled rebuild covers updates to moving base-image tags that do not produce a Dockerfile change for Dependabot
 - Automatic pull requests for security updates
 - Keeps dependencies current with minimal manual intervention
 
