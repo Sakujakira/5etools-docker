@@ -1,10 +1,13 @@
 name: Build & Push Docker (CI/CD)
 
 on:
+  # `httpd:2-alpine` is a moving base-image tag. Rebuild daily so upstream
+  # Alpine/httpd security fixes reach both registries without a source commit.
+  schedule:
+    - cron: '17 4 * * *'
   push:
     branches: [ main ]
     paths-ignore:
-      - '.github/**'
       - 'docker-compose.yml'
       - '*.md'
       - .gitignore
@@ -12,7 +15,6 @@ on:
   pull_request:
     branches: [ main ]
     paths-ignore:
-      - '.github/**'
       - 'docker-compose.yml'
       - '*.md'
       - .gitignore
@@ -73,13 +75,14 @@ jobs:
         platforms: linux/amd64, linux/arm64
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
+        pull: true
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
     # Security scanning only on push (after image is available in registry)
     - name: Run Trivy vulnerability scanner
       if: github.event_name != 'pull_request'
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@v0.36.0
       env:
         TRIVY_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -102,7 +105,7 @@ jobs:
 
     - name: Generate Trivy report summary
       if: github.event_name != 'pull_request'
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@v0.36.0
       env:
         TRIVY_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -110,6 +113,5 @@ jobs:
         image-ref: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/5etools-docker:latest
         format: 'table'
         severity: 'CRITICAL,HIGH'
-        exit-code: '1'  # Fail if critical/high vulnerabilities found
-      continue-on-error: true  # Don't block the workflow
+        exit-code: '0'  # Findings stay visible in the report and SARIF upload.
 
