@@ -111,10 +111,9 @@ jobs:
         image-ref: 'docker.io/${{ secrets.DOCKERHUB_USERNAME }}/5etools-docker@${{ steps.build.outputs.digest }}'
         format: 'sarif'
         output: 'trivy-results.sarif'
-        # Keep vulnerabilities without an upstream fix visible as requested.
+        # Keep vulnerabilities without an upstream fix visible at every severity.
         ignore-unfixed: false
         vuln-type: 'os,library'
-        severity: 'CRITICAL,HIGH,MEDIUM'
 
         exit-code: '0'  # Don't fail build, just report
 
@@ -134,8 +133,7 @@ jobs:
       with:
         image-ref: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/5etools-docker:latest
         format: 'table'
-        # Keep the job-log summary aligned with the SARIF vulnerability scan.
+        # Keep the job-log summary aligned with the all-severity SARIF scan.
         ignore-unfixed: false
-        severity: 'CRITICAL,HIGH,MEDIUM'
         exit-code: '0'  # Findings stay visible in the report and SARIF upload.
 
